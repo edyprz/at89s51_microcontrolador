@@ -1,0 +1,476 @@
+ENSAMBLADOR MCS51	OLVERA TECHNOLOGIES, 2004	16/03/2020 16:15:21
+
+**** ENSAMBLANDO E:\PARA REPORTES-20200305T004811Z-001\PARA REPORTES\T4-PWM\REPORTE\MOTORPWM.ASM ****
+
+0000         	1	;*********************************************
+0000         	2	; Control de velociades de motor. PMW
+0000         	3	;*********************************************
+0000         	4	
+0000         	5	
+0000         	6	;definición de variables y constantes
+0000         	7	TECLADOM	EQU P2
+0000         	8	TEC_ANT		EQU 10H
+0000         	9	
+0000         	10	PWM_DUTY 	equ 7FH     	;CICLO DE TRABAJO
+0000         	11	PWM_TMP1 	equ 7EH
+0000         	12	PWM_TMP2 	equ 7DH
+0000         	13	PWM_OUT 	equ P3.2        ;señal pwm
+0000         	14	PWM_OUT1 	equ P3.3        ;señal pwm
+0000         	15	REST		EQU 76H
+0000         	16	
+0000         	17	AUX		EQU 7DH
+0000         	18	CENTENAS    	EQU 7CH
+0000         	19	DECENAS     	EQU 7BH
+0000         	20	UNIDADES    	EQU 7AH
+0000         	21	ACEN 		EQU 79H
+0000         	22	ADEC	     	EQU 78H
+0000         	23	AUNI		EQU 77H
+0000         	24	LCD		EQU P1
+0000         	25	EN		EQU P3.0
+0000         	26	RS		EQU P3.1
+0000         	27	;**************************************
+0000         	28	
+0000         	29	  org 0
+0000 804E    	30		SJMP INICIO
+0002         	31	
+0002         	32	;-------------------------------------------------------   
+0002         	33	; ------- PWM Service interruption -------
+0002         	34	;-------------------------------------------------------
+0002         	35	
+000B         	36	Org 0BH                      ;vector de interrupción del Timer0
+000B C0E0    	37		push 	Acc 
+000D E57F    	38		MOV 	A,PWM_DUTY
+000F 603A    	39		JZ 	APAGADO
+0011 E57D    	40		MOV 	A,AUX
+0013 B44402  	41		CJNE 	A,#'D',DERECHA
+0016 8018    	42		SJMP 	IZQUIERDA
+0018         	43	
+0018         	44	DERECHA:
+0018 D57E0A  	45		djnz 	PWM_TMP1,PWM_CHK
+001B 757EC8  	46		mov 	PWM_TMP1,#200
+001E C2B2    	47		clr 	PWM_OUT
+0020 D2B3    	48		SETB 	PWM_OUT1
+0022         	49	
+0022 D0E0    	50		pop Acc
+0024 32      	51		reti
+0025         	52	
+0025         	53	PWM_CHK: 
+0025 C57E    	54		xch 	A,PWM_TMP1
+0027 B57F1C  	55		cjne 	A,PWM_DUTY,PWM_fin
+002A D2B2    	56		setb 	PWM_OUT
+002C D2B3    	57		SETB 	PWM_OUT1
+002E         	58	
+002E 8016    	59		SJMP 	PWM_fin
+0030         	60	
+0030         	61	
+0030         	62	
+0030         	63	IZQUIERDA:
+0030 D57E0A  	64		djnz 	PWM_TMP1,PWM_CHK1
+0033 757EC8  	65		mov 	PWM_TMP1,#200
+0036 C2B3    	66		clr 	PWM_OUT1
+0038 D2B2    	67		SETB 	PWM_OUT
+003A D0E0    	68		pop 	Acc
+003C 32      	69		reti
+003D         	70	
+003D         	71	PWM_CHK1: 
+003D C57E    	72		xch 	A,PWM_TMP1
+003F B57F04  	73		cjne 	A,PWM_DUTY,PWM_fin
+0042 D2B3    	74		setb 	PWM_OUT1
+0044 D2B2    	75		SETB 	PWM_OUT
+0046         	76	
+0046         	77	
+0046         	78	PWM_fin:
+0046 C57E    	79		xch 	A,PWM_TMP1
+0048 D0E0    	80		pop Acc
+004A 32      	81		reti
+004B         	82	
+004B         	83	APAGADO:
+004B D2B2    	84		SETB PWM_OUT
+004D D2B3    	85		SETB PWM_OUT1
+004F 32      	86		RETI
+0050         	87	;*************************************
+0050         	88	; ------- Inicio de programa principal -------
+0050         	89	;-------------------------------------------------------
+0050         	90	
+0050         	91	INICIO: 
+0050 11DE    	92			ACALL COND_INI
+0052 116C    	93			ACALL EDOINI		;ESTADO INICIAL DE 000
+0054 11F8    	94			ACALL INICIALIZA_LCD
+0056         	95	EDOINI_:	
+0056 311E    	96			ACALL MSJ_INICIO	;MENSAJE DE INTRODUZCA PORCENTAJE
+0058 3136    	97			ACALL MSJ_PORCENTAJE	;000
+005A 117D    	98			ACALL RETARDO
+005C 11A0    	99			ACALL CENTE		;INGRESA CENTENAS
+005E 1191    	100			ACALL DECE
+0060 1182    	101			ACALL UNID
+0062 117D    	102			ACALL RETARDO
+0064 1176    	103			ACALL SENTIDO
+0066 11AF    	104			ACALL CONVERSION	;LOS VALORES ASCII SE CONVIERTEN A DECIMAL Y SE SUMAN PARA DAR EL PORCENTAJE DE TRABAJO
+0068 117D    	105			ACALL RETARDO	
+006A 80EA    	106			SJMP  EDOINI_
+006C         	107	EDOINI:	
+006C 757A30  	108			MOV UNIDADES,#'0'
+006F 757B30  	109			MOV DECENAS,#'0'
+0072 757C30  	110			MOV CENTENAS,#'0'
+0075 22      	111			RET
+0076         	112		
+0076         	113	SENTIDO:
+0076 314B    	114			ACALL OBT1DIG
+0078 E510    	115			MOV A,TEC_ANT
+007A F57D    	116			MOV AUX,A
+007C 22      	117			RET
+007D         	118		
+007D         	119	RETARDO: 
+007D DFFE    	120		djnz R7,$
+007F DEFC    	121		djnz R6,RETARDO
+0081 22      	122		ret
+0082         	123	;==================================================
+0082         	124	
+0082         	125	UNID:
+0082 117D    	126		ACALL 	RETARDO
+0084 314B    	127		ACALL 	OBT1DIG
+0086 E510    	128		MOV 	A,TEC_ANT
+0088 F57A    	129		MOV 	UNIDADES,A
+008A F577    	130		MOV 	AUNI,A
+008C 3136    	131		ACALL 	MSJ_PORCENTAJE
+008E 117D    	132		ACALL 	RETARDO
+0090 22      	133		RET
+0091         	134	
+0091         	135	DECE:
+0091 117D    	136		ACALL 	RETARDO
+0093 314B    	137		ACALL 	OBT1DIG
+0095 E510    	138		MOV 	A,TEC_ANT
+0097 F57B    	139		MOV 	DECENAS,A
+0099 F578    	140		MOV 	ADEC,A
+009B 3136    	141		ACALL 	MSJ_PORCENTAJE
+009D 117D    	142		ACALL 	RETARDO
+009F 22      	143		RET
+00A0         	144	
+00A0         	145	CENTE:
+00A0 117D    	146		ACALL 	RETARDO
+00A2 314B    	147		ACALL 	OBT1DIG
+00A4 E510    	148		MOV 	A,TEC_ANT
+00A6 F57C    	149		MOV 	CENTENAS,A
+00A8 F579    	150		MOV 	ACEN,A
+00AA 3136    	151		ACALL 	MSJ_PORCENTAJE
+00AC 117D    	152		ACALL 	RETARDO
+00AE 22      	153		RET
+00AF         	154	
+00AF         	155	
+00AF         	156	CONVERSION:
+00AF E577    	157		MOV 	A,AUNI
+00B1 540F    	158		ANL 	A,#0FH
+00B3 F577    	159		MOV 	AUNI,A
+00B5 E578    	160		MOV 	A,ADEC
+00B7 540F    	161		ANL 	A,#0FH
+00B9 F578    	162		MOV 	ADEC,A
+00BB E579    	163		MOV 	A,ACEN
+00BD 540F    	164		ANL 	A,#0FH
+00BF F579    	165		MOV 	ACEN,A
+00C1 75F064  	166		MOV 	B,#100
+00C4 A4      	167		MUL 	AB
+00C5 F579    	168		MOV 	ACEN,A
+00C7 E578    	169		MOV 	A,ADEC
+00C9 75F00A  	170		MOV 	B,#10
+00CC A4      	171		MUL 	AB
+00CD 2579    	172		ADD 	A,ACEN
+00CF 2577    	173		ADD 	A,AUNI
+00D1 75F002  	174		MOV 	B,#2
+00D4 A4      	175		MUL 	AB
+00D5 F5F0    	176		MOV 	B,A
+00D7 74C8    	177		MOV 	A,#200
+00D9 95F0    	178		SUBB 	A,B
+00DB F57F    	179		MOV 	PWM_DUTY,A
+00DD 22      	180		RET
+00DE         	181	
+00DE         	182	;*************************************
+00DE         	183	; ------- Rutina de configuración del sistema -------
+00DE         	184	;--------------------------------------------------------
+00DE         	185	
+00DE         	186	COND_INI: 
+00DE 758902  	187		mov 	TMOD,#02H
+00E1 758A48  	188		mov 	TL0,#48H
+00E4 758C48  	189		mov 	TH0,#48H            ;T = 20mSeg, xtal 11.059 MHz
+00E7 D28C    	190		setb 	TR0
+00E9 75A882  	191		mov 	IE,#82H
+00EC C2B2    	192		clr 	PWM_OUT 
+00EE 757FC7  	193		MOV 	PWM_DUTY,#199       ;valor de inicio 0º
+00F1 757EC8  	194		mov 	PWM_TMP1,#200
+00F4 757D41  	195		MOV 	AUX,#'A'
+00F7 22      	196		ret
+00F8         	197	;***************************************
+00F8         	198	
+00F8         	199	
+00F8         	200	;=============LCD==============================================
+00F8         	201	INICIALIZA_LCD:	
+00F8 7438    	202			MOV 	A,#38h	 	;FUNCTION SET
+00FA 3109    	203			ACALL 	CMD_LCD
+00FC 7401    	204			MOV 	A,#01h		; CLEAR LCD
+00FE 3109    	205			ACALL 	CMD_LCD
+0100 740C    	206			MOV 	A,#0CH	
+0102 3109    	207			ACALL 	CMD_LCD
+0104 7480    	208			MOV 	A,#80H	
+0106 3109    	209			ACALL 	CMD_LCD
+0108 22      	210			RET
+0109         	211	CMD_LCD:
+0109 C2B1    	212		CLR 	RS
+010B 8002    	213		SJMP 	ENABLE
+010D         	214	
+010D         	215	ESCRIBE:
+010D D2B1    	216		SETB RS
+010F         	217	ENABLE:
+010F F590    	218		MOV 	LCD,A
+0111 DFFE    	219		DJNZ 	R7,$
+0113 DFFE    	220		DJNZ 	R7,$
+0115 C2B0    	221		CLR 	EN
+0117 DFFE    	222		DJNZ 	R7,$
+0119 DFFE    	223		DJNZ 	R7,$
+011B D2B0    	224		SETB 	EN
+011D 22      	225		RET
+011E         	226	
+011E         	227	;-------------------------------------------------------
+011E         	228	
+011E         	229	MSJ_INICIO:	
+011E 7401    	230			MOV 	A,#01H
+0120 3109    	231			ACALL 	CMD_LCD
+0122 7480    	232			MOV 	A,#80H
+0124 3109    	233			ACALL 	CMD_LCD
+0126 9001EE  	234			MOV 	DPTR,#INICIOM		;INGRESE %
+0129 312C    	235			ACALL 	MSJB
+012B 22      	236			RET
+012C E4      	237	MSJB:		CLR 	A
+012D 93      	238			MOVC 	A,@A+DPTR
+012E 6005    	239			JZ 	FINB
+0130 310D    	240			ACALL 	ESCRIBE
+0132 A3      	241			INC 	DPTR
+0133 80F7    	242			SJMP 	MSJB
+0135         	243	FINB:				
+0135 22      	244			RET
+0136         	245	
+0136         	246	MSJ_PORCENTAJE:
+0136 74C4    	247		MOV 	A,#0C4H
+0138 3109    	248		ACALL 	CMD_LCD
+013A 7425    	249		MOV 	A,#25H
+013C 310D    	250		ACALL 	ESCRIBE
+013E E57C    	251		MOV 	A,CENTENAS
+0140 310D    	252		ACALL 	ESCRIBE
+0142 E57B    	253		MOV 	A,DECENAS
+0144 310D    	254		ACALL 	ESCRIBE
+0146 E57A    	255		MOV 	A,UNIDADES
+0148 310D    	256		ACALL 	ESCRIBE
+014A 22      	257		RET
+014B         	258	
+014B         	259	;==========RUTINA PARA OBTENER 1 DIGITO POR TECLADO =================
+014B         	260	;	Acc, R6-R7 (TECLADO). En Acc regresa el valor equivalente hex
+014B         	261	;====================================================================
+014B         	262	
+014B 3163    	263	OBT1DIG:	ACALL 	TECLADO		;ESPERA OPCION 
+014D B41004  	264			CJNE 	A,#10H,OBT1DIG01
+0150 F510    	265			MOV 	TEC_ANT,A
+0152 80F7    	266			SJMP 	OBT1DIG
+0154         	267	
+0154 B41104  	268	OBT1DIG01:	CJNE 	A,#11H,OBT1DIG02	;SE PRESIONA MAS DE UNA TECLA
+0157 F510    	269			MOV 	TEC_ANT,A
+0159 80F0    	270			SJMP 	OBT1DIG
+015B         	271	
+015B B51002  	272	OBT1DIG02:	CJNE 	A,TEC_ANT,OBT1DIG03
+015E 80EB    	273			SJMP 	OBT1DIG
+0160         	274	
+0160 F510    	275	OBT1DIG03:	MOV 	TEC_ANT,A
+0162 22      	276			RET
+0163         	277	
+0163         	278	;================RUTINA DEL TECLADO====================================
+0163         	279	TECLADO:
+0163 7EEF    	280		mov R6,#0EFH ;inicia las columnas (nibble alto)
+0165 EE      	281		mov A,R6
+0166         	282	
+0166         	283	CHK_TEC:
+0166 F5A0    	284		mov 	TECLADOM,A 	;envia columna
+0168 DFFE    	285		djnz 	R7,$
+016A E5A0    	286		mov 	A,TECLADOM 	;lee el renglón
+016C FD      	287		mov 	R5,A
+016D 540F    	288		anl 	A,#0FH
+016F B40F09  	289		cjne 	A,#0FH,TEC_00 	;verifica si hay tecla
+0172 EE      	290		mov 	A,R6
+0173 23      	291		rl 	A 		;siguiente columna
+0174 FE      	292		mov 	R6,A
+0175 B4FEEE  	293		cjne 	A,#0FEH,CHK_TEC ;verifica última columna
+0178 7410    	294		mov 	A,#10H 		;código de no_tecla
+017A 22      	295		ret
+017B         	296	;------------------------------------------------------------
+017B         	297	
+017B         	298	TEC_00:	
+017B ED      	299			mov 	A,R5	
+017C B47E03  	300			cjne 	A,#7EH,TEC_01
+017F 7444    	301			mov 	A,#'D'
+0181 22      	302			ret
+0182         	303	
+0182         	304	TEC_01:	
+0182 B47D03  	305			cjne 	A,#7DH,TEC02
+0185 742B    	306			mov 	A,#'+'
+0187 22      	307			ret
+0188         	308	
+0188         	309	TEC02:	
+0188 B47B03  	310			cjne 	A,#7BH,TEC03
+018B 743D    	311			mov 	A,#'='
+018D 22      	312			ret
+018E         	313	
+018E         	314	TEC03:	
+018E B47703  	315			cjne 	A,#77H,TEC04
+0191 742B    	316			mov 	A,#'+'
+0193 22      	317			ret
+0194         	318	
+0194         	319	TEC04:	
+0194 B4BE03  	320			cjne 	A,#0BEH,TEC05
+0197 7439    	321			mov 	A,#'9'
+0199 22      	322			ret
+019A         	323	
+019A         	324	TEC05:	
+019A B4BD03  	325			cjne 	A,#0BDH,TEC06
+019D 7436    	326			mov 	A,#'6'
+019F 22      	327			ret
+01A0         	328	 
+01A0         	329	TEC06:	
+01A0 B4BB03  	330			cjne 	A,#0BBH,TEC07
+01A3 7433    	331			mov 	A,#'3'
+01A5 22      	332			ret
+01A6         	333	
+01A6         	334	TEC07:	
+01A6 B4B703  	335			cjne 	A,#0B7H,TEC08
+01A9 744E    	336			mov 	A,#'N'
+01AB 22      	337			ret
+01AC         	338	
+01AC         	339	TEC08:	
+01AC B4DE03  	340			cjne 	A,#0DEH,TEC09
+01AF 7438    	341			mov 	A,#'8'
+01B1 22      	342			ret
+01B2         	343	
+01B2         	344	TEC09:	
+01B2 B4DD03  	345			cjne 	A,#0DDH,TEC0A
+01B5 7435    	346			mov 	A,#'5'
+01B7 22      	347			ret
+01B8         	348	
+01B8         	349	TEC0A:	
+01B8 B4DB03  	350			cjne 	A,#0DBH,TEC0B
+01BB 7432    	351			mov 	A,#'2'
+01BD 22      	352			ret
+01BE         	353	
+01BE         	354	TEC0B:	
+01BE B4D703  	355			cjne 	A,#0D7H,TEC0C
+01C1 7430    	356			mov 	A,#'0'
+01C3 22      	357			ret
+01C4         	358	
+01C4         	359	TEC0C:	
+01C4 B4EE03  	360			cjne 	A,#0EEH,TEC0D
+01C7 7437    	361			mov 	A,#'7'
+01C9 22      	362			ret
+01CA         	363	
+01CA         	364	TEC0D:	
+01CA B4ED03  	365			cjne 	A,#0EDH,TEC0E
+01CD 7434    	366			mov 	A,#'4'
+01CF 22      	367			ret
+01D0         	368	
+01D0         	369	TEC0E:	
+01D0 B4EB03  	370			cjne 	A,#0EBH,TEC0F
+01D3 7431    	371			mov 	A,#'1'
+01D5 22      	372			ret
+01D6         	373	
+01D6         	374	TEC0F:	
+01D6 B4E703  	375			cjne 	A,#0E7H,TEC_ERR
+01D9 7459    	376			mov 	A,#'Y'
+01DB 22      	377			ret
+01DC         	378	
+01DC         	379	TEC_ERR:	
+01DC 7411    	380			mov 	A,#11H 	;código de más de una tecla
+01DE 22      	381			ret
+01DF         	382	
+01DF         	383	MOVING:	
+01DF 54524142	384		DB 'TRABAJANDO AL:',0
+01E3 414A414E
+01E7 444F2041
+01EB 4C3A00  
+01EE         	385	
+01EE         	386	INICIOM:	
+01EE 494E4752	387		DB 'INGRESE % :',0
+01F2 45534520
+01F6 25203A00
+01FA         	388	
+01FA         	389	end
+
+
+---- TABLA DE SIMBOLOS ----
+
+TECLADOM    	00A0
+TEC_ANT     	0010
+PWM_DUTY    	007F
+PWM_TMP1    	007E
+PWM_TMP2    	007D
+PWM_OUT     	00B2
+PWM_OUT1    	00B3
+REST        	0076
+AUX         	007D
+CENTENAS    	007C
+DECENAS     	007B
+UNIDADES    	007A
+ACEN        	0079
+ADEC        	0078
+AUNI        	0077
+LCD         	0090
+EN          	00B0
+RS          	00B1
+
+
+---- TABLA DE ETIQUETAS ----
+
+DERECHA     	0018
+PWM_CHK     	0025
+IZQUIERDA   	0030
+PWM_CHK1    	003D
+PWM_fin     	0046
+APAGADO     	004B
+INICIO      	0050
+EDOINI_     	0056
+EDOINI      	006C
+SENTIDO     	0076
+RETARDO     	007D
+UNID        	0082
+DECE        	0091
+CENTE       	00A0
+CONVERSION  	00AF
+COND_INI    	00DE
+INICIALIZA_L	00F8
+CMD_LCD     	0109
+ESCRIBE     	010D
+ENABLE      	010F
+MSJ_INICIO  	011E
+MSJB        	012C
+FINB        	0135
+MSJ_PORCENTA	0136
+OBT1DIG     	014B
+OBT1DIG01   	0154
+OBT1DIG02   	015B
+OBT1DIG03   	0160
+TECLADO     	0163
+CHK_TEC     	0166
+TEC_00      	017B
+TEC_01      	0182
+TEC02       	0188
+TEC03       	018E
+TEC04       	0194
+TEC05       	019A
+TEC06       	01A0
+TEC07       	01A6
+TEC08       	01AC
+TEC09       	01B2
+TEC0A       	01B8
+TEC0B       	01BE
+TEC0C       	01C4
+TEC0D       	01CA
+TEC0E       	01D0
+TEC0F       	01D6
+TEC_ERR     	01DC
+MOVING      	01DF
+INICIOM     	01EE
+
+
+**** ERRORES 0, DIRECCION FINAL 01FAH, BYTES USADOS 497 ****

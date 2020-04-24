@@ -1,0 +1,140 @@
+ENSAMBLADOR MCS51	OLVERA TECHNOLOGIES, 2004	16/03/2020 23:21:59
+
+**** ENSAMBLANDO F:\PARA REPORTES-20200305T004811Z-001\PARA REPORTES\T6-TERMO\REPORTE\TAREA6V2.ASM ****
+
+0000         	1	decc		equ	7DH
+0000         	2	uni		equ	7CH
+0000         	3	cen_		equ	7BH
+0000         	4	temp		equ	7AH
+0000 1143    	5	acall 	ini_LCD
+0002         	6	;-------------------------------------------------------
+0002         	7	;PROGRAMA PRINCIPAL
+0002         	8	;-------------------------------------------------------
+0002 1169    	9	INICIO:	acall 	mensaje
+0004 D2B1    	10	inicio_:	setb   	TXD
+0006 E5A0    	11			mov 		A,P2
+0008 F57A    	12			mov 		temp,A
+000A 1112    	13			acall 	CHD8B
+000C 1124    	14			acall 	imptemp
+000E C2B1    	15			clr		TXD
+0010 80F2    	16			sjmp 		inicio_
+0012         	17	;---------------------------------------------------
+0012         	18	;CONVERTIDO DE 16 BITS DE HEXDECIMAL A DECIMAL 
+0012         	19	;---------------------------------------------------
+0012         	20	CHD8B:			
+0012 75F064  	21			mov 	B,#100
+0015 84      	22			div 	AB
+0016 F57B    	23			mov 	cen_,A
+0018 E5F0    	24			mov 	A,B
+001A 75F00A  	25			mov 	B,#10
+001D 84      	26			div 	AB
+001E F57D    	27			mov 	decc,A
+0020 85F07C  	28			mov 	uni,B
+0023 22      	29			ret
+0024         	30	;-------------------------------------------------------------------
+0024         	31	;RUTINA QUE MANDA A IMRIMIR EL VALOR DE LA TEMPERATURA ALA LCD 
+0024         	32	;-------------------------------------------------------------------
+0024 74C2    	33	imptemp:	mov 	A,#0C2H
+0026 1154    	34			acall C_LCD
+0028         	35	
+0028 E57B    	36			mov 	A,cen_
+002A 4430    	37			orl 	A,#00110000B
+002C 1158    	38			acall D_LCD
+002E E57D    	39			mov 	A,decc
+0030 4430    	40			orl 	A,#00110000B
+0032 1158    	41			acall D_LCD
+0034 E57C    	42			mov 	A,uni
+0036 4430    	43			orl 	A,#00110000B
+0038 1158    	44			acall D_LCD
+003A 74DF    	45			mov 	A,#0DFH
+003C 1158    	46			acall D_LCD
+003E 7443    	47			mov 	A,#'C'
+0040 1158    	48			acall D_LCD
+0042 22      	49			ret
+0043         	50	;--------------------------------------------------------------
+0043         	51	;RUTINA QUE INILISA LA LCD 
+0043         	52	;--------------------------------------------------------------
+0043 7438    	53	ini_LCD:	mov 	A,#38H
+0045 1154    	54			acall C_LCD
+0047 7401    	55			mov 	A,#01H
+0049 1154    	56			acall C_LCD
+004B 740C    	57			mov 	A,#0CH
+004D 1154    	58			acall C_LCD
+004F 7480    	59			mov 	A,#80H
+0051 1154    	60			acall C_LCD
+0053 22      	61			ret
+0054         	62	;---------------------------------------------------------------
+0054         	63	; Rutinas para enviar un comando y/o dato al DISPLAY LCD
+0054         	64	;---------------------------------------------------------------
+0054         	65	C_LCD:
+0054 C2B6    	66		clr 	WR ;envia comando
+0056 8002    	67		sjmp 	L00
+0058         	68	
+0058         	69	D_LCD:
+0058 D2B6    	70		setb 	WR ;envia dato en ascii
+005A         	71	L00:
+005A F590    	72		mov 	P1,A
+005C DFFE    	73		djnz 	R7,$
+005E DFFE    	74		djnz 	R7,$
+0060 C2B7    	75		clr 	RD ;habilita la pantalla
+0062 DFFE    	76		djnz 	R7,$
+0064 DFFE    	77		djnz 	R7,$
+0066 D2B7    	78		setb 	RD  ;deshabilita la pantalla
+0068 22      	79		ret
+0069         	80	;-----------------------------------------------------------------
+0069         	81	;RUTINA QUE ENVIA UN MENSAJE POR LA LCD	
+0069         	82	;-----------------------------------------------------------------
+0069         	83		
+0069         	84	mensaje:
+0069 7480    	85		MOV 	A,#80H
+006B 1154    	86		ACALL C_LCD
+006D 900084  	87		mov 	DPTR,#TEMP_
+0070 1173    	88		ACALL MSJ
+0072 22      	89		ret
+0073         	90	MSJ:	
+0073 E4      	91		CLR 	A
+0074 93      	92		MOVC 	A,@A+DPTR
+0075 600C    	93		JZ 	FIN
+0077 1158    	94		ACALL D_LCD
+0079 F599    	95		mov 	sbuf,A
+007B 3099FD  	96		jnb 	TI,$
+007E C299    	97		clr 	TI
+0080 A3      	98		INC 	DPTR
+0081 80F0    	99		SJMP 	MSJ
+0083         	100		
+0083         	101	FIN:
+0083 22      	102		RET	
+0084         	103	TEMP_:		
+0084 54454D50	104		DB 'TEMPERATURA:',0
+0088 45524154
+008C 5552413A
+0090 00      
+0091         	105			
+0091         	106			
+
+
+---- TABLA DE SIMBOLOS ----
+
+decc        	007D
+uni         	007C
+cen_        	007B
+temp        	007A
+
+
+---- TABLA DE ETIQUETAS ----
+
+INICIO      	0002
+inicio_     	0004
+CHD8B       	0012
+imptemp     	0024
+ini_LCD     	0043
+C_LCD       	0054
+D_LCD       	0058
+L00         	005A
+mensaje     	0069
+MSJ         	0073
+FIN         	0083
+TEMP_       	0084
+
+
+**** ERRORES 0, DIRECCION FINAL 0091H, BYTES USADOS 145 ****

@@ -1,0 +1,133 @@
+ENSAMBLADOR MCS51	OLVERA TECHNOLOGIES, 2004	16/03/2020 12:18:08
+
+**** ENSAMBLANDO E:\PARA REPORTES-20200305T004811Z-001\PARA REPORTES\T2-CONTADOR-DISPLAY\REPORTE\CONTADORMODIFICADOPUERTOS.ASM ****
+
+0000         	1	;*****************************************************
+0000         	2	; Contador con display de 7 segmentos con velocidad
+0000         	3	;****************************************************
+0000         	4	
+0000         	5	
+0000         	6	;Decalaracion de variables
+0000         	7	
+0000         	8	
+0000         	9	uno		equ	7FH
+0000         	10	dos 		equ	7EH
+0000         	11	tres		equ	7DH
+0000         	12	cuatro		equ	7CH
+0000         	13	tiempo  	equ	7BH
+0000         	14	
+0000         	15	;--------------------------------
+0000         	16	
+0000         	17	
+0000         	18	INICIO:	
+0000 757F0F  	19	 		mov	uno,#0FH
+0003 757E02  	20			mov	dos,#02H
+0006 757D04  	21			mov	tres,#04H
+0009 757C08  	22			mov	cuatro,#08H
+000C         	23	
+000C         	24	imprime:	
+000C E57F    	25			mov	A,uno  ;Movemos unidades al acumulador
+000E 1127    	26			acall	escara      ;Llamamos a escara para enmascarar lo que hay en el acumulador
+0010 E57E    	27			mov	A,dos   ;Movemos decenas en acumulador
+0012 1127    	28			acall	escara
+0014 E57D    	29			mov	A,tres  ;Sobreescribimos el acumulador con centenas
+0016 1127    	30			acall	escara
+0018 E57C    	31			mov	A,cuatro  ;Sobreescribimos el acumulador con millares
+001A 1127    	32			acall	escara
+001C 22      	33			ret 
+001D         	34	
+001D         	35	increcuatro:	
+001D 057C    	36			inc	cuatro     ;Incremento millares
+001F         	37	incretres:	
+001F 057D    	38			inc	tres   ;Incremento centenas
+0021         	39	incredos:	
+0021 057E    	40			inc	dos	   ;Incremento decenas
+0023         	41	increuno:	
+0023 057F    	42			inc	uno   ;Incremento unidades
+0025 1133    	43			acall	tiempo_    ;LLamamos a tiempo_
+0027         	44	
+0027         	45	
+0027         	46	escara:
+0027 C4      	47			swap	A        ;Intercambia nibbles en el acumulador, los enmascara
+0028 F5A0    	48			mov	p2,A
+002A 7B0A    	49			mov	R3,#10   ;Mueve el dato en el registro3
+002C         	50	
+002C         	51	sig:	
+002C DCFE    	52			djnz	R4,$    ;Salta a la misma posicion si es diferente de cero
+002E DBFC    	53			djnz	R3,sig
+0030 22      	54			ret
+0031         	55	
+0031 AF7B    	56			mov	R7,tiempo 
+0033         	57	
+0033         	58	tiempo_:
+0033 20A007  	59			jb	p2.0,lee1  	;Salta a tim_1 si p2.0 es uno
+0036 20A10B  	60			jb	p2.1,lee2  	;Salta si es uno
+0039 757B07  	61			mov	tiempo,#7
+003C 22      	62			ret
+003D         	63	lee1:	
+003D 20A108  	64			jb	p2.1,lee3   ;Salta a tim_3 si p2.1 es uno
+0040 757B0E  	65			mov	tiempo,#14  ;Mueve el dato a tiempo
+0043 22      	66			ret
+0044         	67	lee2:	
+0044 757B1C  	68			mov	tiempo,#28  ;Mueve el dato a tiempo
+0047 22      	69			ret
+0048         	70	lee3:		
+0048 757B38  	71			mov	tiempo,#56  ;Mueve el dato al tiempo
+004B 22      	72			ret
+004C         	73	
+004C         	74	;-------------------------------------------------------------------------------
+004C         	75	
+004C         	76	RETARDO_:	
+004C 7419    	77			mov	A,#19H	  	;Limite de unidades sera el nueve		
+004E 957F    	78			subb	A,uno
+0050 70D1    	79			jnz	increuno		;Incrementamos valor
+0052 757F0F  	80			mov	uno,#0FH
+0055         	81	
+0055 7429    	82			mov	A,#29H		;Limite de decenas sera el nueve
+0057 957E    	83			subb	A,dos
+0059 70C6    	84			jnz	incredos	
+005B 757E1F  	85			mov	dos,#1FH 
+005E         	86			
+005E 7449    	87			mov	A,#49H		;Limite de centenas sera el nueve
+0060 957D    	88			subb	A,tres
+0062 70BB    	89			jnz	incretres	
+0064 757D3F  	90			mov	tres,#3FH
+0067         	91			
+0067 7489    	92			mov	A,#89H		;Limite de millar sera el nueve
+0069 957C    	93			subb	A,cuatro	
+006B 70B0    	94			jnz	increcuatro	
+006D 020000  	95			ljmp	INICIO          	;Salto largo a inicio
+0070         	96	                 
+0070         	97	
+0070 110C    	98			acall	imprime
+0072 DFD8    	99			djnz	R7,RETARDO_
+0074         	100	
+
+
+---- TABLA DE SIMBOLOS ----
+
+uno         	007F
+dos         	007E
+tres        	007D
+cuatro      	007C
+tiempo      	007B
+
+
+---- TABLA DE ETIQUETAS ----
+
+INICIO      	0000
+imprime     	000C
+increcuatro 	001D
+incretres   	001F
+incredos    	0021
+increuno    	0023
+escara      	0027
+sig         	002C
+tiempo_     	0033
+lee1        	003D
+lee2        	0044
+lee3        	0048
+RETARDO_    	004C
+
+
+**** ERRORES 0, DIRECCION FINAL 0074H, BYTES USADOS 116 ****

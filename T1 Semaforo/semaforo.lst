@@ -1,0 +1,124 @@
+ENSAMBLADOR MCS51	OLVERA TECHNOLOGIES, 2004	12/02/2020 10:29:07
+
+**** ENSAMBLANDO C:\USERS\EMMANUEL\DESKTOP\MICRO_CLASE\T1\SEMAFORO_2_1.ASM ****
+
+0000         	1	;--------- VARIABLES----------- 
+0000         	2	
+0000         	3	TIEMPO1    equ  33H
+0000         	4	TIEMPO2    equ  73H
+0000         	5	TIEMPO3    equ  53H
+0000         	6	
+0000         	7	TIEMPO4    equ  66H
+0000         	8	TIEMPO5    equ  67H
+0000         	9	TIEMPO6    equ  65H
+0000         	10	
+0000         	11	
+0000         	12	
+0000         	13	;---------- PROGRAMA ------------
+0000         	14	
+0000         	15	
+0000         	16	INICIO:
+0000         	17	
+0000 8580E0  	18				mov Acc,P0
+0003 C0E0    	19				PUSH Acc
+0005 53E00F  	20				anl Acc,#0FH
+0008 60F6    	21				jz  INICIO
+000A         	22							
+000A         	23	;            ++++++  SEMAFORO 1 +++++
+000A         	24	
+000A         	25	ciclo:		
+000A 759033  	26				MOV P1,#TIEMPO1
+000D 115D    	27				ACALL RETARDO_1s 
+000F 15E0    	28				dec Acc
+0011 B400F6  	29				cjne A,#0H,ciclo    
+0014         	30			
+0014 759073  	31				MOV P1,#TIEMPO2		
+0017 115D    	32				ACALL RETARDO_1s
+0019         	33	
+0019 759033  	34				MOV P1,#TIEMPO1	
+001C 115D    	35				ACALL RETARDO_1s
+001E         	36			
+001E 759073  	37				MOV P1,#TIEMPO2		
+0021 115D    	38				ACALL RETARDO_1s
+0023         	39				 
+0023 759033  	40				MOV P1,#TIEMPO1	
+0026 115D    	41				ACALL RETARDO_1s
+0028         	42				
+0028 759053  	43				MOV P1,#TIEMPO3		
+002B 115D    	44				ACALL RETARDO_1s	
+002D D0E0    	45				POP Acc
+002F         	46	
+002F         	47	
+002F         	48	
+002F         	49	;          ++++++  SEMAFORO 2 +++++
+002F         	50	
+002F         	51	
+002F         	52	INICIO2:
+002F 8580E0  	53				mov Acc,P0
+0032 C4      	54				swap A
+0033 53E00F  	55				anl Acc,#0FH
+0036 60F7    	56				jz  INICIO2
+0038         	57	
+0038         	58	ciclo2:
+0038 759066  	59				MOV P1,#TIEMPO4		
+003B 115D    	60				ACALL RETARDO_1s
+003D 15E0    	61				dec Acc
+003F B400F6  	62				cjne A,#0H,ciclo2 
+0042         	63	
+0042         	64			
+0042 759067  	65				MOV P1,#TIEMPO5		
+0045 115D    	66				ACALL RETARDO_1s
+0047         	67				
+0047 759066  	68				MOV P1,#TIEMPO4		
+004A 115D    	69				ACALL RETARDO_1s
+004C         	70				
+004C 759067  	71				MOV P1,#TIEMPO5		
+004F 115D    	72				ACALL RETARDO_1s
+0051         	73	
+0051 759066  	74				MOV P1,#TIEMPO4	
+0054 115D    	75				ACALL RETARDO_1s
+0056         	76	
+0056         	77	
+0056 759065  	78				MOV P1,#TIEMPO6		
+0059 115D    	79				ACALL RETARDO_1s	
+005B         	80	
+005B         	81						
+005B 80A3    	82				sjmp INICIO
+005D         	83	
+005D         	84	
+005D         	85	
+005D         	86	;---------- SUBRUTINAS -----------
+005D         	87	
+005D         	88				
+005D         	89	                                                                                                               
+005D         	90	RETARDO_1s:
+005D 7D08    	91			MOV R5,#8
+005F         	92	
+005F DFFE    	93	RETARDO2:	DJNZ R7,$
+0061 DEFC    	94		    	DJNZ R6,RETARDO2
+0063 DDFA    	95			DJNZ R5,RETARDO2
+0065 22      	96			RET
+0066         	97				
+
+
+---- TABLA DE SIMBOLOS ----
+
+TIEMPO1     	0033
+TIEMPO2     	0073
+TIEMPO3     	0053
+TIEMPO4     	0066
+TIEMPO5     	0067
+TIEMPO6     	0065
+
+
+---- TABLA DE ETIQUETAS ----
+
+INICIO      	0000
+ciclo       	000A
+INICIO2     	002F
+ciclo2      	0038
+RETARDO_1s  	005D
+RETARDO2    	005F
+
+
+**** ERRORES 0, DIRECCION FINAL 0066H, BYTES USADOS 102 ****

@@ -1,0 +1,165 @@
+ENSAMBLADOR MCS51	OLVERA TECHNOLOGIES, 2004	17/03/2020 14:57:19
+
+**** ENSAMBLANDO E:\PARA REPORTES-20200305T004811Z-001\PARA REPORTES\T6-TERMO\CHIDO\TERMOMETRO.ASM ****
+
+0000         	1	;****************************************************************
+0000         	2	;            TERMOMETRO 0° - 150°
+0000         	3	;**************************************************************** 
+0000         	4	
+0000         	5	
+0000         	6	;Declaracion de variables
+0000         	7	
+0000         	8	LCD		EQU P1
+0000         	9	RS		EQU P3.7
+0000         	10	EN		EQU P3.6
+0000         	11	WRT         EQU P3.1
+0000         	12	
+0000         	13	DECENAS	equ	7DH
+0000         	14	UNIDADES	equ	7CH
+0000         	15	CENTENAS	equ	7BH
+0000         	16	TEMPERATURA	equ	7AH
+0000         	17	
+0000         	18	
+0000         	19	;----MOSTRAR MENSAJE------
+0000         	20	
+0000 1112    	21			acall 	INICIALIZA_LCD
+0002         	22	
+0002         	23	
+0002         	24	INICIO:	
+0002 1169    	25			acall TEMPER1
+0004         	26	
+0004         	27	;-----INICIO DE PROGRAMA-----
+0004         	28	
+0004         	29	EDOINI:	
+0004 D2B1    	30			setb    WRT
+0006 E5A0    	31			mov 	A,P2
+0008 F57A    	32			mov 	TEMPERATURA,A
+000A 1123    	33			acall 	CONVERTE_HD
+000C 1135    	34			acall 	IMPRIME
+000E C2B1    	35			clr	WRT
+0010 80F2    	36			sjmp 	EDOINI
+0012         	37	
+0012         	38	INICIALIZA_LCD:	
+0012 7438    	39			mov 	A,#38H    ;Funcion SET
+0014 1154    	40			acall 	CMD_LCD
+0016 7401    	41			mov 	A,#01H    ;Clear LCD
+0018 1154    	42			acall 	CMD_LCD
+001A 740C    	43			mov 	A,#0CH
+001C 1154    	44			acall 	CMD_LCD
+001E 7480    	45			mov 	A,#80H
+0020 1154    	46			acall 	CMD_LCD
+0022 22      	47			ret
+0023         	48			
+0023         	49	
+0023         	50	;-----Convertir de Hexadecimal a decimal-----
+0023         	51	
+0023         	52	CONVERTE_HD:			
+0023 75F064  	53			mov 	B,#100
+0026 84      	54			div 	AB
+0027 F57B    	55			mov 	CENTENAS,A
+0029 E5F0    	56			mov 	A,B
+002B 75F00A  	57			mov 	B,#10
+002E 84      	58			div 	AB
+002F F57D    	59			mov 	DECENAS,A
+0031 85F07C  	60			mov 	UNIDADES,B
+0034 22      	61			ret
+0035         	62		
+0035         	63	
+0035         	64	
+0035         	65	;-------------------------------------------------------------------
+0035         	66	
+0035         	67	
+0035         	68	
+0035         	69	IMPRIME:		
+0035 74C2    	70			mov 	A,#0C2H
+0037 1154    	71			acall 	CMD_LCD
+0039         	72	
+0039 E57B    	73			mov 	A,CENTENAS
+003B 4430    	74			orl 	A,#00110000B
+003D 1158    	75			acall 	ESCRIBE
+003F E57D    	76			mov 	A,DECENAS
+0041 4430    	77			orl 	A,#00110000B
+0043 1158    	78			acall 	ESCRIBE
+0045 E57C    	79			mov 	A,UNIDADES
+0047 4430    	80			orl 	A,#00110000B
+0049 1158    	81			acall 	ESCRIBE
+004B 74DF    	82			mov 	A,#0DFH
+004D 1158    	83			acall 	ESCRIBE
+004F 7443    	84			mov 	A,#'C'
+0051 1158    	85			acall 	ESCRIBE
+0053 22      	86			ret		
+0054         	87	
+0054         	88	
+0054         	89	CMD_LCD:
+0054 C2B7    	90		clr 	RS  	;envia comando
+0056 8002    	91		sjmp 	ENABLE 
+0058         	92	
+0058         	93	ESCRIBE:
+0058 D2B7    	94		SETB RS    ;Envia dato en ASCII
+005A         	95	
+005A         	96	ENABLE:
+005A F590    	97		MOV LCD,A
+005C DFFE    	98		DJNZ R7,$
+005E DFFE    	99		DJNZ R7,$
+0060 C2B6    	100		CLR  EN     ;Habilita la pantalla
+0062 DFFE    	101		DJNZ R7,$
+0064 DFFE    	102		DJNZ R7,$
+0066 D2B6    	103		SETB EN
+0068 22      	104		RET        ;Deshabilita la pantalla
+0069         	105	
+0069         	106	TEMPER1:
+0069         	107	
+0069 7480    	108		MOV 	A,#80H
+006B 1154    	109		ACALL 	CMD_LCD
+006D 900084  	110		mov 	DPTR,#TEMPER2
+0070 1173    	111		ACALL 	MSJ               ;Llama la rutina de mensaje
+0072 22      	112		ret
+0073         	113	
+0073         	114	MSJ:	
+0073 E4      	115		CLR 	A
+0074 93      	116		MOVC 	A,@A+DPTR
+0075 600C    	117		JZ 	FIN
+0077 1158    	118		ACALL 	ESCRIBE
+0079 F599    	119		mov 	sbuf,A
+007B 3099FD  	120		jnb 	TI,$
+007E C299    	121		clr 	TI
+0080 A3      	122		INC 	DPTR
+0081 80F0    	123		SJMP 	MSJ	
+0083         	124	FIN:
+0083 22      	125		RET
+0084         	126		
+0084 54454D50	127	TEMPER2: DB 'TEMPERATURA:',0 
+0088 45524154
+008C 5552413A
+0090 00      
+
+
+---- TABLA DE SIMBOLOS ----
+
+LCD         	0090
+RS          	00B7
+EN          	00B6
+WRT         	00B1
+DECENAS     	007D
+UNIDADES    	007C
+CENTENAS    	007B
+TEMPERATURA 	007A
+
+
+---- TABLA DE ETIQUETAS ----
+
+INICIO      	0002
+EDOINI      	0004
+INICIALIZA_L	0012
+CONVERTE_HD 	0023
+IMPRIME     	0035
+CMD_LCD     	0054
+ESCRIBE     	0058
+ENABLE      	005A
+TEMPER1     	0069
+MSJ         	0073
+FIN         	0083
+TEMPER2     	0084
+
+
+**** ERRORES 0, DIRECCION FINAL 0084H, BYTES USADOS 132 ****
